@@ -66,9 +66,9 @@ class Reader(object):
 
 if __name__ == "__main__":
     trainfile_name = "训练.xlsx"
-    testfile_name = "测试A.xlsx"
+    testfile_name = "测试B.xlsx"
 
-    after_file = "after_pre_process.xlsx"
+    after_file = "after_pre_process_B.xlsx"
     r = Reader(trainfile_name, testfile_name)
     r.pre_process(after_file)
     
