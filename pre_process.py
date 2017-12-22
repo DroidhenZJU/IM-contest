@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy.stats import pearsonr
 
 class Reader(object):
     '''
@@ -41,17 +42,29 @@ class Reader(object):
                     c_test.iat[i] = encode_dict[c_test.iat[i]]
             x = self.train_data[col].values
             x_set_list = list(set(x))
-            if (len(x_set_list) >= 2) and (not all([True if str(n) == "nan" else False for n in x])) and (int(x_set_list[0] / 10000000000) != 2017):
+
+            if len(x_set_list) >= 2 and not all([True if str(n) == "nan" else False for n in x]) and int(x_set_list[0] / 10000000000) != 2017 and int(x_set_list[0] / 1000000000000) != 2017 and int(x_set_list[0] / 10000) != 2017:
                 self.selected_features.append(col)
             else:
                 self.dropped_features.append(col)
         self.train_data = self.train_data.loc[:, self.selected_features + ['Y']]
         self.test_data = self.test_data.loc[:, self.selected_features]
                     
+    def coef_selection(self, k = 3000):
+        corr_values = []
 
-    def pre_process(self, after_file):
-        self.fill_empty()
-        self.delete_duplicate()
+        for col in self.test_data.columns:
+            corr_values.append(abs(pearsonr(self.train_data[col].values,self.train_data['Y'])[0]))
+        corr_df = pd.DataFrame({'col':self.test_data.columns, 'corr_value':corr_values})
+        corr_df = corr_df.sort_values(by='corr_value',ascending=False)
+        selected = corr_df['col'].values[:k]
+
+        self.train_data = self.train_data.loc[:, list(selected) + ['Y']]
+        self.test_data = self.test_data.loc[:, list(selected)]
+        print(self.train_data)
+        print(self.test_data)
+
+    def save_to_file(self, after_file):
         with pd.ExcelWriter(after_file) as writer:
             self.train_data.to_excel(writer,sheet_name = "train_data")
             self.test_data.to_excel(writer, sheet_name = "test_data")
@@ -59,13 +72,21 @@ class Reader(object):
 
         return self.train_data
 
+    def pre_process(self, after_file):
+        self.fill_empty()
+        self.delete_duplicate()
+        self.coef_selection()
+        self.save_to_file(after_file)
+
+        
+
 
 
 if __name__ == "__main__":
     trainfile_name = "训练.xlsx"
     testfile_name = "测试A.xlsx"
 
-    after_file = "after_pre_process_A.xlsx"
+    after_file = "feature_selected_A.xlsx"
     r = Reader(trainfile_name, testfile_name)
     r.pre_process(after_file)
     
