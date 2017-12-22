@@ -29,7 +29,7 @@ class Predictor(object):
         self.X_test = self.test_data.values[:,:]
 
 
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X_train, self.Y_train, random_state = 1026, test_size=0.3)
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X_train, self.Y_train, random_state = 1024, test_size=0.3)
         
 
         # print(self.X_train.shape)
@@ -159,7 +159,7 @@ class Xgboost_Predictor(object):
             'num_boost_round ':500,
             'booster': 'gbtree',
             'objective': 'reg:linear',
-            'subsample': 0.8,
+            'subsample': 0.7,
             'colsample_bytree': 0.7,
             'eta': 0.1,
             'max_depth': 3,
@@ -174,7 +174,7 @@ class Xgboost_Predictor(object):
         # reg.fit(self.X_train, self.Y_train)
         # y_predict = reg.predict(self.X_test)
         result = np.vstack((self.test_index, y_predict)).T      
-        with open('answerA.csv', 'w', newline='') as f:
+        with open('answer_feature_selected_3000.csv', 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(result)
 
@@ -207,7 +207,7 @@ class Ensemble(object):
         return y_pred
 
 if __name__ == "__main__":
-    p = Xgboost_Predictor("after_pre_process_A.xlsx")
+    p = Xgboost_Predictor("feature_selected_A.xlsx")
     # p.parameter_search()
-    p.cv_train()
-    # p.predict()
+    # p.cv_train()
+    p.predict()

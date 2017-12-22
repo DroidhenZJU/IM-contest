@@ -2,7 +2,7 @@ Xgboost_config = {
     'num_boost_round ':500,
     'booster': 'gbtree',
     'objective': 'reg:linear',
-    'subsample': 0.8,
+    'subsample': 0.7,
     'colsample_bytree': 0.7,
     'eta': 0.1,
     'max_depth': 3,
