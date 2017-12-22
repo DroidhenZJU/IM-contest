@@ -26,6 +26,9 @@ class Reader(object):
         for col in self.test_data.columns:
             x = np.hstack((self.train_data[col].values, self.test_data[col].values))
             x_set_list = list(set(x))
+            # if col == '210X24':
+            #     print(x_set_list[0] / 10000000000)
+            #     exit()
             if isinstance(x_set_list[0], str):
                 encode_dict = {}
                 for i in range(len(x_set_list)):
@@ -38,7 +41,7 @@ class Reader(object):
                     c_test.iat[i] = encode_dict[c_test.iat[i]]
             x = self.train_data[col].values
             x_set_list = list(set(x))
-            if len(x_set_list) >= 2 and not all([True if str(n) == "nan" else False for n in x]) and x_set_list[0] / 10000000000 != 2017:
+            if (len(x_set_list) >= 2) and (not all([True if str(n) == "nan" else False for n in x])) and (int(x_set_list[0] / 10000000000) != 2017):
                 self.selected_features.append(col)
             else:
                 self.dropped_features.append(col)
