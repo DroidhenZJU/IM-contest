@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from scipy.stats import pearsonr
+from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import GradientBoostingRegressor
 
 class Reader(object):
     '''
@@ -43,14 +46,23 @@ class Reader(object):
             x = self.train_data[col].values
             x_set_list = list(set(x))
 
-            if len(x_set_list) >= 2 and not all([True if str(n) == "nan" else False for n in x]) and int(x_set_list[0] / 10000000000) != 2017 and int(x_set_list[0] / 1000000000000) != 2017 and int(x_set_list[0] / 10000) != 2017:
-                self.selected_features.append(col)
+            if len(x_set_list) >= 2 and not all([True if str(n) == "nan" else False for n in x]):
+                # if col == "210X24":
+                #     print(x_set_list[:20])
+                #     print(str(x_set_list[0]))
+                #     print([str(e).startswith("2017") or str(e).startswith("2016") for e in x_set_list[:20]])
+                if col == "520X171":
+                    self.dropped_features.append(col)
+                elif not all([str(e).startswith("2017") or str(e).startswith("2016") for e in x_set_list[:20]]):
+                    self.selected_features.append(col)
+                else:
+                    self.dropped_features.append(col)
             else:
                 self.dropped_features.append(col)
         self.train_data = self.train_data.loc[:, self.selected_features + ['Y']]
         self.test_data = self.test_data.loc[:, self.selected_features]
                     
-    def coef_selection(self, k = 3000):
+    def coef_selection(self, k = 2000):
         corr_values = []
 
         for col in self.test_data.columns:
@@ -61,8 +73,15 @@ class Reader(object):
 
         self.train_data = self.train_data.loc[:, list(selected) + ['Y']]
         self.test_data = self.test_data.loc[:, list(selected)]
-        print(self.train_data)
-        print(self.test_data)
+        # print(self.train_data)
+        # print(self.test_data)
+
+    def tree_selection(self, k = 2000):
+        self.X_train = self.train_data.values[:, 0:-1]
+        self.Y_train = self.train_data.values[:,-1]
+        self.X_test = self.test_data.values[:,:]
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X_train, self.Y_train, random_state = 1024, test_size=0.1)
+
 
     def save_to_file(self, after_file):
         with pd.ExcelWriter(after_file) as writer:
@@ -75,18 +94,17 @@ class Reader(object):
     def pre_process(self, after_file):
         self.fill_empty()
         self.delete_duplicate()
-        self.coef_selection()
+        # self.coef_selection(k = 2500)
         self.save_to_file(after_file)
 
         
-
 
 
 if __name__ == "__main__":
     trainfile_name = "训练.xlsx"
     testfile_name = "测试A.xlsx"
 
-    after_file = "feature_selected_A.xlsx"
+    after_file = "after_pre_process_A.xlsx"
     r = Reader(trainfile_name, testfile_name)
     r.pre_process(after_file)
     
