@@ -14,11 +14,17 @@ from xgboost import XGBRegressor
 from sklearn.preprocessing import MinMaxScaler
 import xgboost as xgb
 import config
-from imp import reload  
+from imp import reload 
+from sklearn.metrics import mean_squared_error, make_scorer
+
 # from pre_process import Reader
 # from sklearn import cross_validation, metrics
 # from sklearn.grid_search import GridSearchCV
 
+def mean_squared_error_(ground_truth, predictions):
+    return mean_squared_error(ground_truth, predictions) ** 0.5
+
+RMSE = make_scorer(mean_squared_error_, greater_is_better=False)
 
 class GBDT_Predictor(object):
     
@@ -36,13 +42,14 @@ class GBDT_Predictor(object):
     def parameter_search(self):
 
         param_grid = {
-            'min_samples_split':[2, 4, 6],
-            'min_samples_leaf':[1, 2, 4, 6],
-            'max_features':["sqrt", 0.5, 0.6, 0.8, 0.9],
-            'subsample': [0.5, 0.6, 0.8, 0.9],
-            'max_depth': [2, 4, 6, 8],
+            'min_samples_split':[2],
+            'min_samples_leaf':[6],
+            'max_features':[0.8],
+            'subsample': [0.8],
+            'max_depth': [6],
+            'n_estimators': [500]
         }
-        model = GridSearchCV(estimator = GradientBoostingRegressor(learning_rate = 0.1, random_state = 0, n_estimators = 500), param_grid = param_grid, n_jobs = 2, cv=5, verbose=20, scoring = "neg_mean_squared_error")
+        model = GridSearchCV(estimator = GradientBoostingRegressor(learning_rate = 0.1, random_state = 0), param_grid = param_grid, n_jobs = 2, cv=5, verbose=20, scoring = RMSE)
         model.fit(self.X_train, self.Y_train)
         print(model.best_params_, model.best_score_)
 
@@ -52,13 +59,13 @@ class GBDT_Predictor(object):
                                         random_state = 0, 
                                         n_estimators=500, 
                                         min_samples_split = 2,
-                                        min_samples_leaf = 1,
-                                        max_features = "sqrt",
-                                        subsample = 0.5,
-                                        max_depth = 2)
+                                        min_samples_leaf = 6,
+                                        max_features = 0.8,
+                                        subsample = 0.8,
+                                        max_depth = 6)
 
         reg.fit(self.x_train, self.y_train)
-        y_predict = self.pipe.predict(self.x_test)
+        y_predict = reg.predict(self.x_test)
         mse = ((y_predict - self.y_test)**2).mean()
         print("mse: %.4f" %(mse))
 
@@ -100,16 +107,15 @@ class RF_Predictor(object):
 
     
     def eval(self):
-        reg = RandomForestRegressor(learning_rate = 0.1, 
-                                        random_state = 0, 
-                                        n_estimators=500, 
-                                        min_samples_split = 2,
-                                        min_samples_leaf = 1,
-                                        max_features = "sqrt",
-                                        max_depth = 2)
+        reg = RandomForestRegressor(random_state = 0, 
+                                    n_estimators=500, 
+                                    min_samples_split = 2,
+                                    min_samples_leaf = 2,
+                                    max_features = 0.8,
+                                    max_depth = 8)
                                         
         reg.fit(self.x_train, self.y_train)
-        y_predict = self.pipe.predict(self.x_test)
+        y_predict = reg.predict(self.x_test)
         mse = ((y_predict - self.y_test)**2).mean()
         print("mse: %.4f" %(mse))
 
@@ -175,9 +181,14 @@ class Xgboost_Predictor(object):
 
         while True:
             params = config.Xgboost_config
-            # cv_reg = xgb.train(params, dtrain, 500, watchlist, early_stopping_rounds = 50)
-            cv_reg = xgb.cv(params, dtrain, 500, nfold = 5, metrics = "rmse")
-            print(cv_reg)
+            #cv_reg = xgb.train(params, dtrain, 500, watchlist, early_stopping_rounds = 50)
+            reg = XGBRegressor(learning_rate = 0.1, subsample = 0.8, colsample_bytree=0.6, max_depth = 3, n_estimators=100)
+            reg.fit(self.x_train, self.y_train)
+            y_predict = reg.predict(self.x_test)
+            print(((y_predict - self.y_test)**2).mean())
+
+            # cv_reg = xgb.cv(params, dtrain, 500, nfold = 5, metrics = "rmse")
+            # print(cv_reg)
             str = input("Modify the parameter: ")
             if str ==  's':
                 break
@@ -216,42 +227,15 @@ class Xgboost_Predictor(object):
             writer = csv.writer(f)
             writer.writerows(result)
 
-class Ensemble(object):
-    def __init__(self, n_folds, stacker, base_models):
-        self.n_folds = n_folds
-        self.stacker = stacker
-        self.base_models = base_models
-    def fit_predict(self, X, y, T):
-        X = np.array(X)
-        y = np.array(y)
-        T = np.array(T)
-        folds = list(KFold(len(y), n_folds=self.n_folds, shuffle=True, random_state=2016))
-        S_train = np.zeros((X.shape[0], len(self.base_models)))
-        S_test = np.zeros((T.shape[0], len(self.base_models)))
-        for i, clf in enumerate(self.base_models):
-            S_test_i = np.zeros((T.shape[0], len(folds)))
-            for j, (train_idx, test_idx) in enumerate(folds):
-                X_train = X[train_idx]
-                y_train = y[train_idx]
-                X_holdout = X[test_idx]
-                # y_holdout = y[test_idx]
-                clf.fit(X_train, y_train)
-                y_pred = clf.predict(X_holdout)[:]
-                S_train[test_idx, i] = y_pred
-                S_test_i[:, j] = clf.predict(T)[:]
-            S_test[:, i] = S_test_i.mean(1)
-        self.stacker.fit(S_train, y)
-        y_pred = self.stacker.predict(S_test)[:]
-        return y_pred
 
 if __name__ == "__main__":
-    # p = Xgboost_Predictor("feature_selected_A_2500.xlsx")
+    # p = Xgboost_Predictor("after_pre_process_A.xlsx")
     # # p.parameter_search()
     # # p.cv_train()
     # p.predict()
 
-    p = GBDT_Predictor("feature_selected_A_2000.xlsx")
-    p.parameter_search()
+    p = Xgboost_Predictor("feature_selected_A_3000.xlsx")
+    # p.eval()
     # p.cv_train()
-    # p.predict()
+    p.predict()
     

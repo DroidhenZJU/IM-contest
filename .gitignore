@@ -1,4 +1,7 @@
 *.xlsx
 *.xls
 *.csv
+*.pyc
 结果记录.md
+config.py
+answer
