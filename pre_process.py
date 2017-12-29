@@ -4,6 +4,9 @@ from scipy.stats import pearsonr
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import GradientBoostingRegressor
+from xgboost import XGBRegressor
+import config
+import os
 
 class Reader(object):
     '''
@@ -77,10 +80,35 @@ class Reader(object):
         # print(self.test_data)
 
     def tree_selection(self, k = 2000):
-        self.X_train = self.train_data.values[:, 0:-1]
-        self.Y_train = self.train_data.values[:,-1]
-        self.X_test = self.test_data.values[:,:]
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.X_train, self.Y_train, random_state = 1024, test_size=0.1)
+        X_train = self.train_data.values[:, 0:-1]
+        Y_train = self.train_data.values[:,-1]
+        X_test = self.test_data.values[:,:]
+        # x_train, x_test, y_train, y_test = train_test_split(X_train, Y_train, random_state = 1024, test_size=0.1)
+
+        # reg = GradientBoostingRegressor(random_state = 0,
+        #                                 learning_rate = 0.1,
+        #                                 n_estimators= 29,
+        #                                 min_samples_split=2,
+        #                                 min_samples_leaf=5,
+        #                                 max_features=0.81,
+        #                                 subsample= 0.8,
+        #                                 max_depth= 6,
+        # )
+        reg = XGBRegressor(random_state = 0,
+                            learning_rate = 0.1,
+                            n_estimators= 49,
+                            subsample= 0.78,
+                            colsample_bytree= 0.62,
+                            max_depth= 3,
+        )
+        reg.fit(X_train, Y_train)
+        print("---GBDT feature importance: %dth---" %k)
+        print(sorted(reg.feature_importances_, reverse=True)[:k])
+        importance_df = pd.DataFrame({'col':self.test_data.columns, 'importance':reg.feature_importances_})
+        importance_df = importance_df.sort_values(by="importance", ascending=False)
+        selected = importance_df['col'].values[:k]
+        self.train_data = self.train_data.loc[:, list(selected) + ['Y']]
+        self.test_data = self.test_data.loc[:, list(selected)]
 
 
     def save_to_file(self, after_file):
@@ -95,16 +123,17 @@ class Reader(object):
         self.fill_empty()
         self.delete_duplicate()
         # self.coef_selection(k = 2500)
+        self.tree_selection(300)
         self.save_to_file(after_file)
 
         
 
 
 if __name__ == "__main__":
-    trainfile_name = "训练.xlsx"
-    testfile_name = "测试A.xlsx"
+    trainfile_name = os.path.join(config.base_path,"data","训练.xlsx")
+    testfile_name = os.path.join(config.base_path,"data","测试A.xlsx")
 
-    after_file = "after_pre_process_A.xlsx"
+    after_file = os.path.join(config.base_path,"data","tree_feature_selected_A_300.xlsx")
     r = Reader(trainfile_name, testfile_name)
     r.pre_process(after_file)
     

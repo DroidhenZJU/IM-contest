@@ -59,7 +59,7 @@ class Ensemble(object):
 
     def preidct(self, X):
         X = np.array(X)
-        folds = KFold(n_splits=self.n_folds, shuffle=True, random_state=2016)
+        folds = KFold(n_splits=self.n_folds, shuffle=True, random_state = 1026)
         S_test = np.zeros((X.shape[0], len(self.base_models)))
 
         for i, clf in enumerate(self.base_models):
@@ -115,10 +115,10 @@ class Ensemble(object):
         #     'subsample': [0.72, 0.75, 0.78]
         # }
         param_grid = {
-            'n_estimators': [52],
+            'n_estimators': [54],
             'learning_rate': [0.1],
-            'subsample': [0.8],
-            'colsample_bytree' : [0.7],
+            'subsample': [0.81],
+            'colsample_bytree' : [0.67],
             'max_depth' : [2]
         }
         grid = GridSearchCV(estimator=self.stacker, param_grid=param_grid, n_jobs=1, cv=5, verbose=20, scoring=MSE)
@@ -183,20 +183,20 @@ def main(data_file ='feature_selected_3000.xlsx'):
     print('Number of Features: ', len(X_train[0]))
 
     base_models = [
-        RandomForestRegressor(random_state = 0, 
-                            n_estimators=151, 
-                            min_samples_split = 2,
-                            min_samples_leaf = 2,
-                            max_features = 0.79,
-                            max_depth = 8
-        ),
+        # RandomForestRegressor(random_state = 0, 
+        #                     n_estimators=151, 
+        #                     min_samples_split = 2,
+        #                     min_samples_leaf = 2,
+        #                     max_features = 0.79,
+        #                     max_depth = 8
+        # ),
         # ExtraTreesRegressor(
         #     n_jobs=1, random_state=2016, verbose=1,
         #     n_estimators=500, max_features=12
         # ),
         GradientBoostingRegressor(learning_rate = 0.1, 
                                 random_state = 0, 
-                                n_estimators=28, 
+                                n_estimators=29, 
                                 min_samples_split = 2,
                                 min_samples_leaf = 5,
                                 max_features = 0.81,
@@ -220,10 +220,10 @@ def main(data_file ='feature_selected_3000.xlsx'):
 
     y_pred = ensemble.fit_predict(X=X_train, y=Y_train, T=X_test)
 
-    # pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path, "answer", answer_file, index=False, header = False))
+    # pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path, "answer", answer_file), index=False, header = False)
 
     print('--- Submission Generated: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
 
 if __name__ == '__main__':
-    data_file = "E:\\天池比赛\\IM-contest\\data\\feature_selected_A_3000.xlsx"
+    data_file = "E:\\天池比赛\\IM-contest\\data\\tree_feature_selected_A_2000.xlsx"
     main(data_file)
