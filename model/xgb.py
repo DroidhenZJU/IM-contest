@@ -35,7 +35,9 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
     print('Number of Features: ', len(X_train[0]))
 
     x_train, x_test, y_train, y_test = train_test_split(X_train, Y_train, random_state = 1024, test_size=0.1)
-    
+    # print(x_test)
+    # exit()
+
     reg = XGBRegressor(random_state = 0)
 
     # 调参
@@ -58,53 +60,66 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
     # print('Best CV Score:')
     # print(-model.best_score_)
 
-    dtrain = xgb.DMatrix(x_train, y_train)
-    deval = xgb.DMatrix(x_test, y_test)
-    watchlist = [(deval, 'eval')]
-    params = {
-        'num_boost_round ':500,
-        'booster': 'gbtree',
-        'objective': 'reg:linear',
-        'subsample': 0.78,
-        'colsample_bytree': 0.62,
-        'eta': 0.1,
-        'max_depth': 3,
-        'seed': 0,
-        'silent': 0,
-        'eval_metric': 'rmse'
-    }
-    reg_xgb = xgb.train(params, dtrain, 500, watchlist, early_stopping_rounds = 50)
+
 
     #手动调参
-    # from imp import reload 
-    # while True:
-    #     param_grid = config.Xgboost_config
-    #     model = GridSearchCV(estimator = reg, param_grid = param_grid, n_jobs = 1, cv=10, verbose=20, scoring = MSE)
-    #     model.fit(X_train, Y_train)
+    from imp import reload 
+    while True:
+        param_grid = config.Xgboost_category_config
+        model = GridSearchCV(estimator = reg, param_grid = param_grid, n_jobs = 1, cv=10, verbose=20, scoring = MSE)
+        model.fit(X_train, Y_train)
     
-    #     # print('--- Grid Search Completed: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
-    #     print('Param grid:')
-    #     print(param_grid)
-    #     print('Best Params:')
-    #     print(model.best_params_)
-    #     print('Best CV Score:')
-    #     print(-model.best_score_)
+        # print('--- Grid Search Completed: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
+        print('Param grid:')
+        print(param_grid)
+        print('Best Params:')
+        print(model.best_params_)
+        print('Best CV Score:')
+        print(-model.best_score_)
         
-    #     str = input("Modify the parameter: ")
-    #     if str ==  's':
-    #         break
-    #     else:
-    #         reload(config)
-        
+        str = input("Modify the parameter: ")
+        if str ==  's':
+            break
+        else:
+            reload(config)
 
-    #y_pred = model.predict(X_test)
+    # sklearn接口    
+    model = XGBRegressor(n_estimators = 49,
+                        gamma = 0, 
+                        learning_rate = 0.1,
+                        subsample = 0.78,
+                        colsample_bytree = 0.62,
+                        max_depth = 3
+    )
+    model.fit(x_train, y_train)
+    y_p = model.predict(x_test)
+    print("-----eval MSE-----")
+    print(mean_squared_error_(y_test, y_p))
+    y_pred = model.predict(X_test)
+    pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path,"answer", answer_file), index=False, header=False)
 
-    y_pred_xgb = reg_xgb.predict(xgb.DMatrix(X_test),ntree_limit = reg_xgb.best_ntree_limit)
-
-    #pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path,"answer", answer_file), index=False, header=False)
-    #pd.DataFrame({'id': test_index, 'y': y_pred_xgb}).to_csv(os.path.join(config.base_path,"answer", "xgb" + answer_file), index=False, header=False)
+    
+    # xgb接口
+    # dtrain = xgb.DMatrix(x_train, y_train)
+    # deval = xgb.DMatrix(x_test, y_test)
+    # watchlist = [(deval, 'eval')]
+    # params = {
+    #     'num_boost_round ':500,
+    #     'booster': 'gbtree',
+    #     'objective': 'reg:linear',
+    #     'subsample': 0.78,
+    #     'colsample_bytree': 0.62,
+    #     'eta': 0.1,
+    #     'max_depth': 3,
+    #     'seed': 0,
+    #     'silent': 0,
+    #     'eval_metric': 'rmse'
+    # }
+    # reg_xgb = xgb.train(params, dtrain, 500, watchlist, early_stopping_rounds = 50)
+    # y_pred_xgb = reg_xgb.predict(xgb.DMatrix(X_test),ntree_limit = reg_xgb.best_ntree_limit)
+    # pd.DataFrame({'id': test_index, 'y': y_pred_xgb}).to_csv(os.path.join(config.base_path,"answer", "xgb" + answer_file), index=False, header=False)
     print('--- Result Generated: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
 
 if  __name__ == "__main__":
-    data_file = "E:\\天池比赛\\IM-contest\\data\\tree_feature_selected_xgboost_train_A.xlsx"
+    data_file = "E:\\天池比赛\\IM-contest\\data\\feature_selected_A_3000_category.xlsx"
     main(data_file)

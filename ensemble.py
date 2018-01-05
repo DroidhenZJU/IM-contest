@@ -183,13 +183,13 @@ def main(data_file ='feature_selected_3000.xlsx'):
     print('Number of Features: ', len(X_train[0]))
 
     base_models = [
-        # RandomForestRegressor(random_state = 0, 
-        #                     n_estimators=151, 
-        #                     min_samples_split = 2,
-        #                     min_samples_leaf = 2,
-        #                     max_features = 0.79,
-        #                     max_depth = 8
-        # ),
+        RandomForestRegressor(random_state = 0, 
+                            n_estimators=151, 
+                            min_samples_split = 2,
+                            min_samples_leaf = 2,
+                            max_features = 0.79,
+                            max_depth = 8
+        ),
         # ExtraTreesRegressor(
         #     n_jobs=1, random_state=2016, verbose=1,
         #     n_estimators=500, max_features=12
@@ -205,11 +205,11 @@ def main(data_file ='feature_selected_3000.xlsx'):
         ),
         XGBRegressor(
             random_state = 0,
-            n_estimators=49, 
-            max_depth=3,
-            learning_rate=0.1, 
-            subsample=0.78, 
-            colsample_bytree=0.62
+            n_estimators = 64, 
+            max_depth = 3,
+            learning_rate = 0.1, 
+            subsample = 0.78, 
+            colsample_bytree = 0.62
         )
     ]
     ensemble = Ensemble(
@@ -218,12 +218,12 @@ def main(data_file ='feature_selected_3000.xlsx'):
         base_models = base_models
     )
 
-    y_pred = ensemble.fit_predict(X=X_train, y=Y_train, T=X_test)
+    y_pred = ensemble.fit_predict(X=x_train, y=y_train, T=X_test)
 
-    # pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path, "answer", answer_file), index=False, header = False)
+    pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path, "answer", answer_file), index=False, header = False)
 
     print('--- Submission Generated: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
 
 if __name__ == '__main__':
-    data_file = "E:\\天池比赛\\IM-contest\\data\\tree_feature_selected_A_2000.xlsx"
+    data_file = "E:\\天池比赛\\IM-contest\\data\\feature_selected_A_3000.xlsx"
     main(data_file)
