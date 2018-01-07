@@ -63,33 +63,33 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
 
 
     #手动调参
-    from imp import reload 
-    while True:
-        param_grid = config.Xgboost_category_config
-        model = GridSearchCV(estimator = reg, param_grid = param_grid, n_jobs = 1, cv=10, verbose=20, scoring = MSE)
-        model.fit(X_train, Y_train)
+    # from imp import reload 
+    # while True:
+    #     param_grid = config.Xgboost_category_config
+    #     model = GridSearchCV(estimator = reg, param_grid = param_grid, n_jobs = 1, cv=10, verbose=20, scoring = MSE)
+    #     model.fit(X_train, Y_train)
     
-        # print('--- Grid Search Completed: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
-        print('Param grid:')
-        print(param_grid)
-        print('Best Params:')
-        print(model.best_params_)
-        print('Best CV Score:')
-        print(-model.best_score_)
+    #     # print('--- Grid Search Completed: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
+    #     print('Param grid:')
+    #     print(param_grid)
+    #     print('Best Params:')
+    #     print(model.best_params_)
+    #     print('Best CV Score:')
+    #     print(-model.best_score_)
         
-        str = input("Modify the parameter: ")
-        if str ==  's':
-            break
-        else:
-            reload(config)
+    #     str = input("Modify the parameter: ")
+    #     if str ==  's':
+    #         break
+    #     else:
+    #         reload(config)
 
     # sklearn接口    
-    model = XGBRegressor(n_estimators = 49,
+    model = XGBRegressor(n_estimators = 66,
                         gamma = 0, 
                         learning_rate = 0.1,
-                        subsample = 0.78,
+                        subsample = 0.79,
                         colsample_bytree = 0.62,
-                        max_depth = 3
+                        max_depth = 2
     )
     model.fit(x_train, y_train)
     y_p = model.predict(x_test)
