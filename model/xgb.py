@@ -35,7 +35,7 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
     print('Number of Features: ', len(X_train[0]))
 
     x_train, x_test, y_train, y_test = train_test_split(X_train, Y_train, random_state = 1024, test_size=0.1)
-    # print(x_test)
+    # print(y_test)
     # exit()
 
     reg = XGBRegressor(random_state = 0)
@@ -84,19 +84,20 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
     #         reload(config)
 
     # sklearn接口    
-    model = XGBRegressor(n_estimators = 66,
+    model = XGBRegressor(n_estimators = 68,
                         gamma = 0, 
                         learning_rate = 0.1,
-                        subsample = 0.79,
-                        colsample_bytree = 0.62,
-                        max_depth = 2
+                        subsample = 0.78,
+                        colsample_bytree = 0.63,
+                        max_depth = 5
     )
-    model.fit(x_train, y_train)
+    model.fit(X_train, Y_train)
     y_p = model.predict(x_test)
     print("-----eval MSE-----")
     print(mean_squared_error_(y_test, y_p))
     y_pred = model.predict(X_test)
-    pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path,"answer", answer_file), index=False, header=False)
+    print("----Average of Result : %f----" %y_pred.mean())
+    pd.DataFrame({'id': test_index, 'y': y_pred}).to_csv(os.path.join(config.base_path,"answer", "all_data_" + answer_file), index=False, header=False)
 
     
     # xgb接口
@@ -121,5 +122,5 @@ def main(data_file = "../data/feature_selected_A_3000.xlsx"):
     print('--- Result Generated: %s minutes ---' % round(((time.time() - start_time) / 60), 2))
 
 if  __name__ == "__main__":
-    data_file = "E:\\天池比赛\\IM-contest\\data\\feature_selected_A_3000_category.xlsx"
+    data_file = "E:\\天池比赛\\IM-contest\\data\\feature_selected_AB_1000_category.xlsx"
     main(data_file)

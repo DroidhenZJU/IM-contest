@@ -196,21 +196,21 @@ def main(data_file ='feature_selected_3000.xlsx'):
         # ),
         GradientBoostingRegressor(learning_rate = 0.1, 
                                 random_state = 0, 
-                                n_estimators=29, 
+                                n_estimators=30, 
                                 min_samples_split = 2,
-                                min_samples_leaf = 5,
-                                max_features = 0.81,
-                                subsample = 0.8,
-                                max_depth = 6
+                                min_samples_leaf = 8,
+                                max_features = 0.79,
+                                subsample = 0.78,
+                                max_depth = 5
         ),
-        XGBRegressor(
-            random_state = 0,
-            n_estimators = 64, 
-            max_depth = 3,
-            learning_rate = 0.1, 
-            subsample = 0.78, 
-            colsample_bytree = 0.62
-        )
+        XGBRegressor(n_estimators = 66,
+                        gamma = 0, 
+                        learning_rate = 0.1,
+                        subsample = 0.81,
+                        colsample_bytree = 0.61,
+                        max_depth = 3,
+                        random_state=0
+    )
     ]
     ensemble = Ensemble(
         n_folds = 5,
